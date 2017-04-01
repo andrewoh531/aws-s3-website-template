@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  HostedZone:
+    AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
+    ConstraintDescription: must be a valid DNS zone name.
+    Description: The DNS name of an existing Amazon Route 53 hosted zone
+    Type: String
+  OriginAccessIdentity:
+    Description: The origin access identity created for the cloudfront distribution to use
+    Type: String
+  CanonicalUserId:
+    Description: The origin access identity's canonical user id for use in bucket policy
+    Type: String
+
+Mappings:
+  Region2S3WebsiteSuffix:
+    ap-northeast-1:
+      Suffix: .s3-website-ap-northeast-1.amazonaws.com
+    ap-northeast-2:
+      Suffix: .s3-website-ap-northeast-2.amazonaws.com
+    ap-south-1:
+      Suffix: .s3-website-ap-south-1.amazonaws.com
+    ap-southeast-1:
+      Suffix: .s3-website-ap-southeast-1.amazonaws.com
+    ap-southeast-2:
+      Suffix: .s3-website-ap-southeast-2.amazonaws.com
+    ca-central-1:
+      Suffix: .s3-website-ca-central-1.amazonaws.com
+    cn-north-1:
+      Suffix: .s3-website.cn-north-1.amazonaws.com.cn
+    eu-central-1:
+      Suffix: .s3-website-eu-central-1.amazonaws.com
+    eu-west-1:
+      Suffix: .s3-website-eu-west-1.amazonaws.com
+    eu-west-2:
+      Suffix: .s3-website-eu-west-2.amazonaws.com
+    sa-east-1:
+      Suffix: .s3-website-sa-east-1.amazonaws.com
+    us-east-1:
+      Suffix: .s3-website-us-east-1.amazonaws.com
+    us-east-2:
+      Suffix: .s3-website-us-east-2.amazonaws.com
+    us-west-1:
+      Suffix: .s3-website-us-west-1.amazonaws.com
+    us-west-2:
+      Suffix: .s3-website-us-west-2.amazonaws.com
+
+Resources:
+
+  S3BucketForWebsiteContent:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        ErrorDocument: index.html
+        IndexDocument: index.html
+
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties: 
+      Bucket: !Ref S3BucketForWebsiteContent
+      PolicyDocument: 
+        Statement: 
+          - 
+            Action: 
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource: !Join ["", ["arn:aws:s3:::", !Ref S3BucketForWebsiteContent, "/*"] ] 
+            Principal: 
+              CanonicalUser: !Ref CanonicalUserId
+
+  WebsiteCDN:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: CDN for S3-backed website
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: 'true'
+          TargetOriginId: !Ref HostedZone
+          ViewerProtocolPolicy: allow-all
+        DefaultRootObject: index.html
+        Enabled: 'true'
+        Origins:
+        - Id: !Ref HostedZone
+          S3OriginConfig:
+            OriginAccessIdentity: !Join ['', ['origin-access-identity/cloudfront/', !Ref OriginAccessIdentity] ]
+          DomainName: !GetAtt S3BucketForWebsiteContent.DomainName
+
+  WebsiteDNSName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Comment: CNAME redirect custom name to CloudFront distribution
+      HostedZoneName:
+        Fn::Join:
+        - ''
+        - - Ref: HostedZone
+          - .
+      Name:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::StackName
+          - Ref: AWS::AccountId
+          - .
+          - Ref: AWS::Region
+          - .
+          - Ref: HostedZone
+      ResourceRecords:
+      - Fn::Join:
+        - ''
+        - - http://
+          - Fn::GetAtt:
+            - WebsiteCDN
+            - DomainName
+      TTL: '900'
+      Type: CNAME
+    
+Outputs:
+  BucketName:
+    Description: Name of S3 bucket to hold website content
+    Value:
+      Ref: S3BucketForWebsiteContent
+  WebsiteURL:
+    Description: The URL of the newly created website
+    Value:
+      Fn::Join:
+      - ''
+      - - http://
+        - Ref: WebsiteDNSName
