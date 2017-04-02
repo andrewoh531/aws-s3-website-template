@@ -13,5 +13,14 @@ This repo is optimised and configured for the `mynich.com.au` website.
 You will need python version 3. You will also need to install the python dependencies by running:
 `pip install -r requirements.txt`.
 
+You will need to install Docker.
+
+You will also need the following environment variables set as they are used by Stackup (via Docker):
+```
+export AWS_DEFAULT_REGION=ap-southeast-2
+export AWS_ACCESS_KEY_ID=xxx
+export AWS_SECRET_ACCESS_KEY=yyy
+```
+
 To deploy changes to the website
 move the whole website (all static files and assets) into the `./website-artifacts/` folder then run the `deploy.sh` script.

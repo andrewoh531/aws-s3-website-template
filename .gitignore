@@ -1,4 +1,4 @@
 .envrc
 
 .vscode/
-website-artifacts/
+website-artifacts/*

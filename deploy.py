@@ -29,6 +29,10 @@ def create_cloudformation_stack(stack_name, stack_template_file, original_access
 
 if __name__ == "__main__":
     hosted_zone = "myniche.com.au"
+    stack_name = "my-niche"
 
     original_access_identity = create_origin_access_identity(hosted_zone)
-    create_cloudformation_stack("my-niche", "./cloudformation-templates/s3-website.yml", original_access_identity)
+    create_cloudformation_stack(stack_name, "./cloudformation-templates/s3-website.yml", original_access_identity)
+
+    # Get the s3 bucket name
+    # Sync contents from website-artifacts folder to the s3 bucket.

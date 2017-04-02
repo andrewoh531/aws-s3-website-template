@@ -74,6 +74,7 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Aliases: [ !Ref HostedZone, !Join [ '', ['www.', !Ref HostedZone] ] ]
         Comment: CDN for S3-backed website
         DefaultCacheBehavior:
           ForwardedValues:
@@ -88,33 +89,25 @@ Resources:
             OriginAccessIdentity: !Join ['', ['origin-access-identity/cloudfront/', !Ref OriginAccessIdentity] ]
           DomainName: !GetAtt S3BucketForWebsiteContent.DomainName
 
-  WebsiteDNSName:
+  RootApexDnsName:
     Type: AWS::Route53::RecordSet
     Properties:
-      Comment: CNAME redirect custom name to CloudFront distribution
-      HostedZoneName:
-        Fn::Join:
-        - ''
-        - - Ref: HostedZone
-          - .
-      Name:
-        Fn::Join:
-        - ''
-        - - Ref: AWS::StackName
-          - Ref: AWS::AccountId
-          - .
-          - Ref: AWS::Region
-          - .
-          - Ref: HostedZone
-      ResourceRecords:
-      - Fn::Join:
-        - ''
-        - - http://
-          - Fn::GetAtt:
-            - WebsiteCDN
-            - DomainName
-      TTL: '900'
-      Type: CNAME
+      Name: !Ref HostedZone
+      AliasTarget:
+        DNSName: !GetAtt WebsiteCDN.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2 # Cloudfront
+      HostedZoneName: !Join [ '', [ !Ref HostedZone, '.' ] ]
+      Type: A
+  
+  WwwDnsName:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Join [ '', ['www.', !Ref HostedZone] ]
+      AliasTarget:
+        DNSName: !GetAtt WebsiteCDN.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2 # Cloudfront
+      HostedZoneName: !Join [ '', [ !Ref HostedZone, '.' ] ]
+      Type: A
     
 Outputs:
   BucketName:
@@ -127,4 +120,4 @@ Outputs:
       Fn::Join:
       - ''
       - - http://
-        - Ref: WebsiteDNSName
+        - Ref: RootApexDnsName
