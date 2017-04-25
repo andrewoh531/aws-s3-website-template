@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from subprocess import call
+import argparse
 import boto3
 import os
 
@@ -28,11 +29,10 @@ def create_cloudformation_stack(stack_name, stack_template_file, original_access
 # TODO If call to docker errors then this script should also error out.
 
 if __name__ == "__main__":
-    hosted_zone = "myniche.com.au"
-    stack_name = "my-niche"
+    parser = argparse.ArgumentParser(description="Create aws resources to host a static website")
+    parser.add_argument("domainName", help="The domain name to configure in Route 53")
+    args = parser.parse_args()
+    hosted_zone = args.domainName
 
     original_access_identity = create_origin_access_identity(hosted_zone)
-    create_cloudformation_stack(stack_name, "./cloudformation-templates/s3-website.yml", original_access_identity)
-
-    # Get the s3 bucket name
-    # Sync contents from website-artifacts folder to the s3 bucket.
+    create_cloudformation_stack(hosted_zone.replace(".", "-") + "-s3-website", "./cloudformation-templates/s3-website.yml", original_access_identity)
