@@ -1,7 +1,8 @@
-# Generic AWS S3 Website Template #
+# AWS S3 Website Template
 
 This repository creates an S3 hosted website using cloudformation. The following AWS resources are created:
 * Route 53 record sets
+* A Cloudfront origin access identity to allow Cloudfront access to the S3 bucket
 * Cloudfront distribution (along with its Origin Access Identity)
 * S3 bucket (and necessarily bucket policy to ensure objects can only be accessed via Cloudfront)
 
