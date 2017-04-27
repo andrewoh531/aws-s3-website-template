@@ -3,8 +3,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   HostedZone:
     AllowedPattern: (?!-)[a-zA-Z0-9-.]{1,63}(?<!-)
-    ConstraintDescription: must be a valid DNS zone name.
+    ConstraintDescription: must be a valid, existing Route53 hosted zone name.
     Description: The DNS name of an existing Amazon Route 53 hosted zone
+    Type: String
+  WebsiteDns:
+    Description: The DNS name of the website, a subdomain of the Route 53 hosted zone
     Type: String
   OriginAccessIdentity:
     Description: The origin access identity created for the cloudfront distribution to use
@@ -71,17 +74,17 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
-        Aliases: [ !Ref HostedZone, !Join [ '', ['www.', !Ref HostedZone] ] ]
+        Aliases: [ !Ref WebsiteDns, !Join [ '', ['www.', !Ref WebsiteDns] ] ]
         Comment: CDN for S3-backed website
         DefaultCacheBehavior:
           ForwardedValues:
             QueryString: 'true'
-          TargetOriginId: !Ref HostedZone
+          TargetOriginId: !Ref WebsiteDns
           ViewerProtocolPolicy: allow-all
         DefaultRootObject: index.html
         Enabled: 'true'
         Origins:
-        - Id: !Ref HostedZone
+        - Id: !Ref WebsiteDns
           S3OriginConfig:
             OriginAccessIdentity: !Join ['', ['origin-access-identity/cloudfront/', !Ref OriginAccessIdentity] ]
           DomainName: !GetAtt S3BucketForWebsiteContent.DomainName
@@ -89,7 +92,7 @@ Resources:
   RootApexDnsName:
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !Ref HostedZone
+      Name: !Ref WebsiteDns
       AliasTarget:
         DNSName: !GetAtt WebsiteCDN.DomainName
         HostedZoneId: Z2FDTNDATAQYW2 # Cloudfront
@@ -99,7 +102,7 @@ Resources:
   WwwDnsName:
     Type: AWS::Route53::RecordSet
     Properties:
-      Name: !Join [ '', ['www.', !Ref HostedZone] ]
+      Name: !Join [ '', ['www.', !Ref WebsiteDns] ]
       AliasTarget:
         DNSName: !GetAtt WebsiteCDN.DomainName
         HostedZoneId: Z2FDTNDATAQYW2 # Cloudfront
