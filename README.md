@@ -19,7 +19,7 @@ export AWS_SECRET_ACCESS_KEY=yyy
 ```
 
 ## Creating the stack
-To create the stack run `./deploy.sh <domain-name>`. For example if you're trying to create a website
+To create the stack run `./deploy.py <domain-name>`. For example if you're trying to create a website
 with the domain name of `dev.andrewoh.ninja` run the command `./deploy.sh dev.andrewoh.ninja` and wait for all 
 AWS resources to be created. Note that you will need to create the hosted zone `andrewoh.ninja` prior to running 
 the script.
