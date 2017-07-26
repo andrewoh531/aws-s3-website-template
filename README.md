@@ -19,10 +19,15 @@ export AWS_SECRET_ACCESS_KEY=yyy
 ```
 
 ## Creating the stack
-To create the stack run `./deploy.py <domain-name>`. For example if you're trying to create a website
-with the domain name of `dev.andrewoh.ninja` run the command `./deploy.sh dev.andrewoh.ninja` and wait for all 
-AWS resources to be created. Note that you will need to create the hosted zone `andrewoh.ninja` prior to running 
-the script.
+To create the stack run `./deploy.py --dns <website-dns-name> --hosted-zone <route-53-hosted-zone-name>`. For example if you're trying to create a website
+with the DNS name of `dev.andrewoh.ninja` and a hosted zone value of `andrewoh.ninja` run the command `./deploy.sh --dns dev.andrewoh.ninja --hosted-zone andrewoh.ninja` and wait for all 
+AWS resources to be created.
+
+Note that you will need to create the hosted zone `andrewoh.ninja` prior to running the script.
 
 ## Deploying your website's html/css/js 
-This script will create the necessary AWS resources however you will be responsible for deploying your website to the relevant S3 bucket using either aws cli or your own deployment strategy. Deploying your website is outside the scope of this repository.
+This script will create the necessary AWS resources however you will be responsible for deploying your website to the relevant S3 bucket using either aws cli or your own deployment strategy. You can run the `aws s3 sync` command to sync a specific directory to the s3 bucket. For example you can run
+`aws s3 sync . s3://your-bucket-name` to sync the local directory with the bucket named `your-bucket-name`. You can retrieve the s3 bucket name from the Cloudformation template's resource list.
+
+After you upload your files, you may need to invalidate the Cloudfront cache for the changes to be picked up.
+

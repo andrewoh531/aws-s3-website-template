@@ -27,16 +27,13 @@ def create_cloudformation_stack(stack_name, stack_template_file, original_access
 
 # TODO If call to docker errors then this script should also error out.
 
-def get_root_dns(website_dns):
-    starting_index = website_dns.rfind('.', 0, website_dns.rfind('.')) + 1
-    return website_dns[starting_index:]
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create aws resources to host a static website")
-    parser.add_argument("domainName", help="The domain name to configure in Route 53")
+    parser.add_argument("--dns", dest="dns", help="The website dns name to create as the A Record in Route 53")
+    parser.add_argument("--hosted-zone", dest="hosted_zone", help="The existing hosted zone name in Route 53")
     args = parser.parse_args()
-    website_dns = args.domainName
-    hosted_zone = get_root_dns(website_dns)
+    website_dns = args.dns
+    hosted_zone = args.hosted_zone
 
     original_access_identity = create_origin_access_identity(hosted_zone)
     create_cloudformation_stack("website-" + website_dns.replace(".", "-"), "./cloudformation-templates/s3-website.yml", original_access_identity)
